@@ -1,17 +1,18 @@
-Optimizations in Compression Techniques
-Sushmitha Kudari
-ECE 251C 
+# Optimizations in Compression Techniques
 
-Abstract
+
+## Abstract
 Data is becoming the cornerstone of machine learning. As it grows in size, so do the problems it presents. Compression techniques are a way to mitigate some of the problems of hardware storage, transmission time and bandwidth for large files by allowing data to be compressed and stored in a smaller format. This paper takes a look at three different lossless compression methods--Huffman compression, Wavelet compression and Fractal compression-- and compares their runtime and compression factor. Optimizations such as multi-threading on each channel for all three methods are implemented. The Huffman encoder is optimized by multi-threading on each channel and increasing memory to decrease runtime.The Fractal encoder is optimized by a known-index transformation and the implementation of a Encoder class. This allows for a higher compression factor and faster runtime when writing out to a csv file. The wavelet transformation is the most efficient of the three methods. Through multithreading and using the optimized encoder the wavelet transform has the best trade off between runtime and compression ratio. The optimization techniques presented in this paper will show that they should be considered in future compression methods.
-Introduction
+
+## Introduction
 As data continues to grow, it has presented many issues in storage and transmission. Big data requires large storage systems and consumes a lot of bandwidth during data transmission.  Through mathematical developments, there have been many ways to compress and reconstruct data in memory efficient manners. Compression is very beneficial in decreasing transmission time and increasing bandwidth when sharing data. When data is compressed, it is much easier to transport between different users and systems. 
 Most compression techniques achieve their goal of storing data such as files or images in a smaller format; however, these techniques don’t aim to compress data in the fastest time possible. Through optimization tricks such as multi-threading and use of pre-defined variables, the following three compression techniques will be optimized in both memory used and time to execute: Huffman compression, Fractal compression, and Wavelet compression. 
 All the compression techniques implemented will be lossless -- no data will be discarded. This will ensure that compression time is not reliant on a loss of quality when the image is reconstructed. This paper will not address the process of decompression -- only the process of compression and storage of data. Images will be used to compare compression techniques since this would allow for a 2D visualization in all three techniques.
-Previous Works
+
+## Previous Works
 The three compression techniques (Huffman compression, Fractal compression, and Wavelet compression) are not new in their developments. The most naive of these techniques is Huffman compression. Huffman compression encodes each RGB value as a binary value and writes the whole image out to a binary file. Fractal compression is the most difficult of the three techniques to implement. This method of encoding iterates through the image looking for similar blocks and uses a mapping function to store this relation. The wavelet compression is the most efficient of all three methods to compress an image. It puts an image through the wavelet transformations and allows the implementation to retain as little or as much of the information from the data. 
 
-Huffman Encoding
+### Huffman Encoding
 Huffman encoding is a lossless encoding technique in which pixel values are replaced by bitwise representation based on the frequency of a color occurring in the image. An example is shown below of the proposed implementation. This format of encoding is a variable-length Huffman encoding.  
 A 4 by 4 image has the given pixel colors.
 Figure 1: Image with 3 different pixel colors.
@@ -26,17 +27,17 @@ Figure 3: Variable length Huffman tree encoding of the color dictionary
 						
 	The proposed implementation would build three variable length Huffman trees, as opposed to one which is the common format. One tree for each color channel. While this increases the memory by a slight bit--storing 3 codebooks vs. 1, this approach would allow for an implementation that decreases runtime with multi-threading. The codebook is then to be used in the decompression process to reconstruct the original image. 
 
-Fractal Compression
+### Fractal Compression
 Fractal compression is the idea of storing pixel values as collections of transformations. It is very heavy in its time and amount of data that is written out. The first step in this process is to partition the image into range and domain blocks. For each of the range blocks of size s x s, find a domain block of size 2s x 2s that is “similar to it”. Mathematically this means to apply the transformations to the domain blocks and find the error between the transformed domain block and the original range block it is considered to represent. The transformation with the minimal error is chosen to represent that domain block and compared to the transformation values of the other domain blocks in the partition. The position of the range block, its appropriate transformation and the position of the domain block are then written out in another expensive time operation. This approach is called partitioned iterated function system. (Menassel, Rafik)
 Partitioned iterated function system is a very time expensive method because it requires iterating over the image at least twice to find matching range and domain blocks. There are some currently existing proposals for optimization of this algorithm. The biggest time saver would be to reduce the time to find a close-enough matching domain block for each range block. Currently this is a brute force algorithm however, this can be done via dynamic programming to significantly increase the time efficiency (Texas Instruments). Another proposed solution would be to take advantage of multi-threading in ways of partitioning the image. The bottleneck issue here becomes if there are race conditions in the process and this requires a very long and complicated implementation of a multi-threading class. 
 
-Wavelet Compression
+### Wavelet Compression
 Wavelet compression is performed in three phases for lossy compression. The main concept is to apply a wavelet transformation, quantize the transformed image, and encode it. The wavelet transformation will generate n x m coefficients where n and m are the rows and columns of the pixels in the image. These coefficients can then be compressed because the information “is statistically concentrated in just a few coefficients” (Wavelet transform). In the proposed implementation, the most preserved information will be in Low-Low pass filtered image--usually stored at index 0. The coefficients are then put through a quantizer in the case of a lossy compression. Since the proposed implementation is lossless, the quantizer step is skipped and we proceed to the encoding step (Wikimedia Foundation). 
 To decompress the image, the process is reversed. The compressed image is put into a decoder, followed by a de-quantizer (if the compression is lossy). Finally an inverse wavelet transformation is applied to recover the original image.	
 Proposed Approach
 The approach for each one of the compression algorithms is different. What remains the same is the method of comparison across all three. The two main comparison methods are time and compression. 
 
-Time Comparisons
+### Time Comparisons
 The first metric measured will be the execution time. It is said that memory is cheap, time is expensive. For this reason, along with the fact that compression techniques already reduce memory used, run time will have a slightly higher importance than memory. The execution time of any of the three compression techniques consists of three steps: 
 Time to read in image
 Time to encode (compression operations occur here) 
@@ -45,28 +46,28 @@ All three of these steps are slightly different in each of the three compression
 The time to encode will differ significantly among all three. Fractal encoding should present the highest time to encode since it performs the most extensive computations on pixel values. Huffman encoding should take the least amount of time to encode since it is at most iterating over every pixel in an image and placing them in a tree. Wavelet compression should take slightly more time to encode since it calls Huffman as its last step. 
 The time to write out is the time needed to write the recorded information out to a file. For Huffman encoding and Wavelet compression this is writing out the final binary values of the original or modified image to a bin file. These two compression methods will take the same amount of time to write out since Wavelet compression calls Huffman encoding as its last step. Fractal encoding should take more time to write out as it is writing out in a csv format.
 
-Compression Comparisons
+### Compression Comparisons
 Memory will be measured by the compression factor which is defined as the total size of the output file divided by the size of the original image. In all three optimization techniques, the output file contains enough information along with some stored variables to reconstruct the original image. 
 
-Huffman Optimization
+#### Huffman Optimization
 	The Huffman implementation is extended from the 1-D data implementation written by GeeksForGeeks (Huffman Coding: Greedy Algo-3). The standard for image Huffman compression is to compress the image by pixel values and not by channels. The proposed implementation builds out three Huffman encoding trees--one for each channel. This provides time benefits when running each channel’s encoding with a single thread. Three threads will run simultaneously and build out three Huffman trees -- one per R,G,B. 
 Huffman encoding will return an encoded .bin (binary) file of the image and a codebook. The codebook is a dictionary of the intensity value (between 0 and 255) and the binary encoding of that intensity value. The codebook and encoded file can then be used to recreate the original image. While the three channel tree building increases the memory by allowing the same intensity value to be encoded more than once and producing three code books to store, the time saved is worth the memory gained. 
 	Note that the .bin file written out will contain the binary codes written as strings which are 8 bytes each. Therefore the final compressed file size must be divided by 8 to get the true file size.  
 
-Fractal Optimization
+#### Fractal Optimization
 Pierre Vigier has developed a very naive implementation of a fractal compressor and decompressor (Pvigier). Premier's implementation uses randomly ordered transformations when matching domain blocks for each range block in order to minimize the distance metric. The proposed implementation saves memory by ordering these transformations in a list in the following order: 
-# 0: original
-# 1: original, 90 degree rotation
-# 2: original, 180 degree rotation
-# 3: original, 270 degree rotation
-# 4: flipped (left to right)
-# 5: flipped, 90 degree rotation
-# 6: flipped, 180 degree rotation
-# 7: flipped, 270 degree rotation
+ 0: original
+ 1: original, 90 degree rotation
+ 2: original, 180 degree rotation
+ 3: original, 270 degree rotation
+ 4: flipped (left to right)
+ 5: flipped, 90 degree rotation
+ 6: flipped, 180 degree rotation
+ 7: flipped, 270 degree rotation
 This will allow a faster write time and higher compression rate because the output file need only contain the index of the transform performed as opposed to the direction and degree of transform. In addition, a known index implementation will not have a negative effect on the speed of decoding the image.
 Another time optimization proposed is the use of an Encoder Class Object. This Encoder Class will perform operations of size calculation and reductions without the need of repeated calls. Further time optimization is proposed by encoding each channel with a single thread much like the Huffman implementation. Multi-threading can then be used to calculate the transforms of each channel which will be written out to a csv file. 
 
-Wavelet Optimization
+### Wavelet Optimization
 	Since the implementation of all three methods are lossless, the wavelet compression implementation will not consist of having a quantizer. The proposed approach is to use three individual threads to run a wavelet transform on each one of the color channels. From the approximation coefficients, keep only the Low Pass-Low Pass coefficients and normalize them by dividing them by the max. Finally run the newly generated image through the optimized huffman encoder to get the compressed binary file. 
 	The wavelet transform will be computed with three different wavelet families: Haar, Daubechies and Biorthogonal. Biorthogonal wavelet is the best for image reconstruction since it exhibits linear phase. 
 
