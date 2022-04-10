@@ -74,7 +74,7 @@ Another time optimization proposed is the use of an Encoder Class Object. This E
 Helper Classes
 	Python does not support threads returning values from their target functions. For this reason, the ThreadWithReturnValue is sourced from StackOverflow. It is used in Fractal encoding and Wavelet Encoding. It allows the return values to be captured after a thread has started to run and completed its target function.
 
-Data
+## Data
 The classic image in Signals and Image processing was used for all comparisons. Lenna is shown below:
 
 Figure 4: Lenna 
@@ -152,8 +152,8 @@ Daubechies: 19.280
 Bi-othogonal: 18.982
 
 
-Comparison & Discussion
-Runtime
+## Comparison & Discussion
+### Runtime
 	Before beginning an analysis on each of the compression techniques, it is worth noting that from here on out, the results will be discussing multi-threaded compressions. Multi-threading was more efficient in all encoding phases. While one may think that this should be expected, multithreading can have a bottleneck effect that can result in the same runtime as a non-multithreaded implementation. This case could be seen if some code block A is being run for each channel R,G,B on three different threads -- one for each channel. If code block B is reliant on all three threads finishing code block A, there will be a wait time if all three threads don’t finish at the same time. Hypothetically one of the threads could take the same amount of time to finish as it would take a non-threaded implementation. This was not the case seen in this experiment but is worth noting. 
 The best encoding time is seen in the multi-threaded Wavelet transforms. The first reason for this is that the other two methods of compression are cumbersome in computation. Fractal encoding iterates through the image finding transformations that match domain to range blocks. This is rather expensive in time. Huffman encoding time relies on the size of the image and range of intensities it is given. Although Huffman encoding is used as a part of the Wavelet transform, it is fed a much smaller image to encode after generating a smaller image from the wavelet coefficients. 
 
@@ -164,11 +164,12 @@ The Wavelet compressor is faster than the fractal compressor because a wavelet t
 
 Fractal encoding has the slowest encoding time, nearly 30 times slower than Wavelet transforms. In images where patterns or repeated textures are not present, fractal encoder is not optimal. This is best understood by examining the procedure of a fractal encoder. The encoding time is heavily reliant on size s which determines the range block. The larger the range block, the harder it is to find a domain block of size 2s x 2s that can represent the range block via some transformation. This is already a delaying factor -- it is heavily reliant on an optimal size s. In the proposed implementation s is stored as factor=8. A size too small is bound to be more reliable but faces a computation penalty. In addition for every range block in the image, when finding a proper domain block, 8 transformations are computed on the domain block. This is the second delaying factor. If s is relatively large, each transformation is bound to take more time. If s is relatively small, these 8 transformations will have to be computed more times than at a larger s. The worst case runtime of a fractal encoder is O(N *N * 8 * 2s *2s). The first N is from the range blocks that are iterated over. The second N is the domain blocks iterated over. The 8 is the number of transformations conducted and final 2s * 2s are the run time for performing rotations and flips on a given domain block. 
 
-Compression Factor 
+### Compression Factor 
 The Huffman Encoder has the lowest compression factor of all three compression methods. This is because this encoder performs well in compression when images have relatively the same intensity values at each pixel. This can be seen in the analysis of Figures 5 and 6. Traditionally images are encoded as a whole such that R,G,B intensity values are represented in one single tree. The implementation put forth here, has built out 3 individual trees for time optimization. The worst case memory by the given implementation is M(N *8 * 255 * 3) where 8 is the max number of bits needed to represent 255 intensities across 3 color channels in an image of size n x m = N. 
 The fractal encoder has a compression factor around 7 to 10. This can be further reduced by having the format of the output file be something other than a csv. If there was a huffman encoder for numeric values, the csv could have been encoded as a binary file. In the unknown transformation index it was necessary to write out the flip and rotation degree performed on the domain range. The known index method only required a single index number to be written out. In the decoding process, this index can be used to look up in O(1) time since the flip and transformations are already stored.
 The wavelet encoding method is the most efficient of all three. This can be seen irrespective of what wavelet family is used in the encoding process. The high compression rate relies on the principle of transform coding. When the initial wavelet transform is done, coefficients are generated for every pixel in the image, however most of the information in the image is concentrated in just a few coefficients. These coefficients are seen when they are divided by the max. The concentration of coefficients can be seen in Figure 6. 
-Conclusion
+
+## Conclusion
 Optimization should be used to decrease runtime and increase compression factors. In a method such as Wavelet transform this can be done by using multi-threading on each channel transform. The biorthogonal family of wavelets is best for image reconstruction since it exhibits linear phase, but it is slower and has a slightly lower compression rate than the Haar and Daubechies family. For a lossy compression, the compression ratio can be lowered even further by adding a quantizer before encoding. Huffman encoding is the naivest starting point but should be used in conjunction with other compression techniques such as a wavelet transformer. A wavelet compression can have an even lower compression ratio by using other encoders with better ratios. Multithreading should be used in the encoding process to speed up runtime. The bottleneck effect may be present with multi-threading but it will never perform worse than an unthreaded implementation. 
 Fractal encoding can be efficient in memory when similar textures and patterns are present in an image. This would make it easier to find a domain block that matches the range block. In addition, the size of the range block s has a significant role in the runtime of this encoder. A gradient walk implementation should be considered for finding an optimal size s. Further time optimization can occur by adding two features to the encoding process. The first should be a dynamic programming optimization to match range and domain blocks. The second should use multi-threading to perform the 8 transformation on the domain block to find which is best. For the proposed implementation of a known-index transformation, multi-threading could create race conditions that would not have been optimal when used in conjunction with the multi-threaded domain blocks. For memory optimization, a known-index transformation method should be implemented such as the one described in this paper. 
 
@@ -188,7 +189,7 @@ Fractal encoding can be efficient in memory when similar textures and patterns a
 
 
 
-Bibliography
+## Bibliography
 “Huffman Coding: Greedy Algo-3.” GeeksforGeeks, 24 Nov. 2021, https://www.geeksforgeeks.org/huffman-coding-greedy-algo-3/#:~:text=Huffman%20coding%20is%20a%20lossless,character%20gets%20the%20largest%20code. 
 Huffman coding - base of JPEG image compression. Universal Document Converter. (2013, December 27). Retrieved October 15, 2021, from https://www.print-driver.com/stories/huffman-coding-jpeg. 
 Menassel, Rafik. “Optimization of Fractal Image Compression.” IntechOpen, IntechOpen, 28 July 2020, https://www.intechopen.com/chapters/72917. 
